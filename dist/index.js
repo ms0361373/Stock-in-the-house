@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // Import all dependencies, mostly using destructuring for better view.
 const bot_sdk_1 = require("@line/bot-sdk");
 const express_1 = __importDefault(require("express"));
+const request = require('request');
 // Setup all LINE client and Express configurations.
 const clientConfig = {
     channelAccessToken: `csVTWHw2sveQzUMBSTuhbsjGTJN5tqHYwFDYXM6i5jr7ETBpmdi4H8JqJsx2bh4pVBYX9x+Dw5NL9joswgviRCoV7o6EIkL4DSxTpcAUBCGU+BK9VIHPXSmY1vqWMepsReHaExnTi97VDLwK9ds66gdB04t89/1O/w1cDnyilFU=` || '',
@@ -30,12 +31,32 @@ const textEventHandler = async (event) => {
     const { replyToken } = event;
     const { text } = event.message;
     // Create a new message.
-    const response = {
-        type: 'text',
-        text,
-    };
+    // const msg: TextMessage = {
+    //   type: 'text',
+    //   text,
+    // };
+    request('http://www.twse.com.tw/exchangeReport/STOCK_DAY_ALL?response=open_dat', async function (error, response) {
+        var _a;
+        const body = JSON.parse(response === null || response === void 0 ? void 0 : response.body);
+        const data = body === null || body === void 0 ? void 0 : body.data;
+        const stock = (_a = data === null || data === void 0 ? void 0 : data.find) === null || _a === void 0 ? void 0 : _a.call(data, stocks => (stocks === null || stocks === void 0 ? void 0 : stocks[0]) === text);
+        if (!stock)
+            return;
+        const info = `
+      證券代號: ${stock === null || stock === void 0 ? void 0 : stock[0]}
+      證券名稱: ${stock === null || stock === void 0 ? void 0 : stock[1]}
+      成交股數: ${stock === null || stock === void 0 ? void 0 : stock[2]}
+      成交金額: ${stock === null || stock === void 0 ? void 0 : stock[3]}
+      開盤價: ${stock === null || stock === void 0 ? void 0 : stock[4]}
+      最高價: ${stock === null || stock === void 0 ? void 0 : stock[5]}
+      最低價: ${stock === null || stock === void 0 ? void 0 : stock[6]}
+      收盤價: ${stock === null || stock === void 0 ? void 0 : stock[7]}
+      漲跌價差: ${stock === null || stock === void 0 ? void 0 : stock[8]}
+      成交筆數: ${stock === null || stock === void 0 ? void 0 : stock[9]}
+    `;
+        await client.replyMessage(replyToken, { type: 'text', text: info });
+    });
     // Reply to the user.
-    await client.replyMessage(replyToken, response);
 };
 // Register the LINE middleware.
 // As an alternative, you could also pass the middleware in the route handler, which is what is used here.
