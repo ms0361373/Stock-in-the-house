@@ -4,16 +4,16 @@ import express, { Application, Request, Response } from 'express';
 
 // Setup all LINE client and Express configurations.
 const clientConfig: ClientConfig = {
-  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN || '',
-  channelSecret: process.env.CHANNEL_SECRET,
+  channelAccessToken: `csVTWHw2sveQzUMBSTuhbsjGTJN5tqHYwFDYXM6i5jr7ETBpmdi4H8JqJsx2bh4pVBYX9x+Dw5NL9joswgviRCoV7o6EIkL4DSxTpcAUBCGU+BK9VIHPXSmY1vqWMepsReHaExnTi97VDLwK9ds66gdB04t89/1O/w1cDnyilFU=` || '',
+  channelSecret: `c87e18d98e242f44423ba085bd6b0060`,
 };
 
 const middlewareConfig: MiddlewareConfig = {
-  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
-  channelSecret: process.env.CHANNEL_SECRET || '',
+  channelAccessToken: `csVTWHw2sveQzUMBSTuhbsjGTJN5tqHYwFDYXM6i5jr7ETBpmdi4H8JqJsx2bh4pVBYX9x+Dw5NL9joswgviRCoV7o6EIkL4DSxTpcAUBCGU+BK9VIHPXSmY1vqWMepsReHaExnTi97VDLwK9ds66gdB04t89/1O/w1cDnyilFU=`,
+  channelSecret: `c87e18d98e242f44423ba085bd6b0060` || '',
 };
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // Create a new LINE SDK client.
 const client = new Client(clientConfig);
