@@ -23,48 +23,77 @@ const app: Application = express();
 
 // Function handler to receive the text.
 const textEventHandler = async (event: WebhookEvent): Promise<MessageAPIResponseBase | undefined> => {
-  // Process all variables here.
   if (event.type !== 'message' || event.message.type !== 'text') {
     return;
   }
 
-  // Process all message related variables here.
   const { replyToken } = event;
   const { text } = event.message;
-  
-  // Create a new message.
-  // const msg: TextMessage = {
-  //   type: 'text',
-  //   text,
-  // };
 
   request('http://www.twse.com.tw/exchangeReport/STOCK_DAY_ALL?response=open_dat', async function (error: any, response: any) {
 
     const body = JSON.parse(response?.body)
     const data:string[] = body?.data;
-  
+   
     const stock:any = data?.find?.(stocks => stocks?.[0] === text);
+   
     if(!stock) return;
-    const info = `
-      證券代號: ${stock?.[0]}
-      證券名稱: ${stock?.[1]}
-      成交股數: ${stock?.[2]}
-      成交金額: ${stock?.[3]}
-      開盤價: ${stock?.[4]}
-      最高價: ${stock?.[5]}
-      最低價: ${stock?.[6]}
-      收盤價: ${stock?.[7]}
-      漲跌價差: ${stock?.[8]}
-      成交筆數: ${stock?.[9]}
-    `
-    await client.replyMessage(replyToken, { type: 'text', text: info });
+    let info:string=`證券代號: ${stock[0]}\n證券名稱: ${stock[1]}\n成交金額: ${stock[3]}\n漲跌價差: ${stock[8]}\n`;
+    
+    const url = `https://invest.cnyes.com/twstock/tws/${text}`
+    request(url, async function (error: any, response: any) {
+      // const body = JSON.parse(response?.body)
+      const data:string = await generateBaseInfo(response?.body);
+     
+      if(!data){
+        client.replyMessage(replyToken, { type: 'text', text: `查詢失敗` });
+        return;
+      }
+      const finalString = info.concat(data);
+      await client.replyMessage(replyToken, { type: 'text', text: finalString });
+    });
   });
+  
+ 
 
   // Reply to the user.
   
 };
 
+const generateBaseInfo = (body: string): string => {
+  const baseInfo_rules = new RegExp(`<div class="jsx-838437900 profile-data"><div class="jsx-2687283247 jsx-1763002358 data-block data-block--wider"><div class="jsx-2687283247 jsx-1763002358 block-title">成交張數<\/div>.*市值 .*<\/div><div class="jsx-2687283247 jsx-1763002358 block-value block-value--">.*<\/div><\/div><\/div>`,'g')
+  const baseInfo_div = body.match(baseInfo_rules)
 
+
+  const title_rules = new RegExp(`<div class="jsx-2687283247 jsx-1763002358 block-title">[\u4e00-\u9fa50-9]*<\/div>`,'g');
+  const title_rules_list = baseInfo_div?.[0]?.match(title_rules);
+  const title_list:string[] = [];
+  title_rules_list?.forEach(title => {
+    const rules1 = `<div class="jsx-2687283247 jsx-1763002358 block-title">`
+    const rules2 = `</div>`
+    const pureString = title?.replace?.(rules1,'').replace?.(rules2,'').trim();
+    title_list.push(pureString);
+  })
+
+
+  const content_rules = new RegExp(`<div class="jsx-2687283247 jsx-1763002358 block-value block-value(--|-- block-value--small)">[ -.0-9A-Z]+<\/div>`,'g');
+  const content_rules_list = baseInfo_div?.[0]?.match(content_rules);
+
+  const content_list:string[] = [];
+  content_rules_list?.forEach(content => {
+    const rules1 = `<div class="jsx-2687283247 jsx-1763002358 block-value block-value--">`
+    const rules2 = `<div class="jsx-2687283247 jsx-1763002358 block-value block-value-- block-value--small">`
+    const rules3 = `</div>`
+    const pureString = content?.replace?.(rules1,'').replace?.(rules2,'')?.replace?.(rules3,'').trim();
+    content_list.push(pureString);
+  })
+
+  let baseInfoArray:string='';
+  title_list.forEach((e,i) => {
+    baseInfoArray = baseInfoArray.concat(title_list?.[i]?.concat?.(': ')?.concat?.(content_list?.[i]).concat?.('\n'));
+  })
+  return baseInfoArray
+}
 
 
 // Register the LINE middleware.
